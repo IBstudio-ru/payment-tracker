@@ -170,7 +170,7 @@
 // ═══════════════════════════════════════════════════
 // КОНФИГУРАЦИЯ — вставьте ваш URL Apps Script здесь:
 // ═══════════════════════════════════════════════════
-let SCRIPT_URL = localStorage.getItem('payment_tracker_script_url') || https://script.google.com/macros/s/AKfycbzxJtyM1MsIVzCmfBZNm9s9i89TqiXkVAc4bCAI13U95AFu1g5zL0XXtHrXpkogYAx4/exec;
+let SCRIPT_URL = localStorage.getItem('payment_tracker_script_url') || 'https://script.google.com/macros/s/AKfycbzxJtyM1MsIVzCmfBZNm9s9i89TqiXkVAc4bCAI13U95AFu1g5zL0XXtHrXpkogYAx4/exec';
 
 let data = [];
 let sortCol = null, sortDir = 1;
@@ -202,7 +202,10 @@ function saveScriptUrl() {
 // ── API ──
 async function api(params) {
   const url = SCRIPT_URL + '?' + new URLSearchParams(params);
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    method: 'GET',
+    redirect: 'follow'
+  });
   const json = await res.json();
   if (json.error) throw new Error(json.error);
   return json;
