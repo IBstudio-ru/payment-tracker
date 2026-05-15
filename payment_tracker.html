@@ -207,7 +207,20 @@ async function loadData() {
   setBadge('saving', '⟳ Загрузка...');
   try {
     const result = await api({ action: 'getAll' });
-    data = result.rows || [];
+    
+    // Переводим русские колонки из Google Sheets в понятный коду формат
+    data = (result.rows || []).map(r => ({
+      id: r.id || r['id'],
+      client: r['Клиент'] || r.client || '',
+      title: r['Название'] || r.title || '',
+      category: r['Категория'] || r.category || '',
+      articleUrl: r['Ссылка на статью'] || r.articleUrl || '',
+      taskUrl: r['Ссылка на задачу'] || r.taskUrl || '',
+      payBudget: r['Дата оплаты бюджета'] || r.payBudget || '',
+      budgetAmt: r['Сумма бюджета'] || r.budgetAmt || '',
+      status: r['Статус'] || r.status || ''
+    }));
+    
     setBadge('ok', '● Данные загружены');
     render();
   } catch(e) {
@@ -307,16 +320,17 @@ async function saveRow(keepOpen = false) {
   const client = document.getElementById('f-client').value.trim();
   if (!client) { alert('Укажите название клиента'); return; }
 
+  // Отправляем данные в Гугл Таблицу с русскими ключами
   const row = {
     id: editId || '',
-    client,
-    title: document.getElementById('f-title').value.trim(),
-    category: document.getElementById('f-category').value.trim(),
-    status: document.getElementById('f-status').value,
-    articleUrl: document.getElementById('f-article').value.trim(),
-    taskUrl: document.getElementById('f-task').value.trim(),
-    payBudget: document.getElementById('f-paybudget').value,
-    budgetAmt: Number(document.getElementById('f-budgetamt').value) || 0,
+    'Клиент': client,
+    'Название': document.getElementById('f-title').value.trim(),
+    'Категория': document.getElementById('f-category').value.trim(),
+    'Статус': document.getElementById('f-status').value,
+    'Ссылка на статью': document.getElementById('f-article').value.trim(),
+    'Ссылка на задачу': document.getElementById('f-task').value.trim(),
+    'Дата оплаты бюджета': document.getElementById('f-paybudget').value,
+    'Сумма бюджета': Number(document.getElementById('f-budgetamt').value) || 0,
   };
 
   const btnClose = document.getElementById('save-btn');
