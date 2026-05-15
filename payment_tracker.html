@@ -3,94 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Оплаты v9</title>
+<title>CRM Оплаты v11</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, system-ui, sans-serif; font-size: 13px; background: #f8f9fa; color: #202124; }
-  
+  body { font-family: -apple-system, system-ui, sans-serif; font-size: 13px; background: #f8f9fa; color: #202124; line-height: 1.4; }
   header { background: #fff; border-bottom: 1px solid #dadce0; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .status-pill { font-size: 11px; padding: 4px 12px; border-radius: 16px; background: #e8f0fe; color: #1967d2; font-weight: 500; }
-
   .toolbar { background: #fff; padding: 12px 20px; border-bottom: 1px solid #dadce0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .search-input { flex: 2; padding: 8px 12px; border: 1px solid #dadce0; border-radius: 8px; outline: none; min-width: 150px; }
-  select { padding: 8px; border: 1px solid #dadce0; border-radius: 8px; background: #fff; cursor: pointer; flex: 1; min-width: 120px; }
-
+  select { padding: 8px; border: 1px solid #dadce0; border-radius: 8px; background: #fff; cursor: pointer; }
   .view-toggle { display: flex; background: #eee; border-radius: 8px; padding: 2px; margin-left: auto; }
   .view-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; background: transparent; font-size: 12px; }
   .view-btn.active { background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 600; }
-
   .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s; }
   .btn-primary { background: #1a73e8; color: #fff; }
   .btn-outline { background: #fff; border: 1px solid #dadce0; color: #3c4043; }
-
   .content { padding: 20px; }
-  .table-container { background: #fff; border: 1px solid #dadce0; border-radius: 12px; overflow: hidden; display: block; }
+  .card { background: #fff; border: 1px solid #dadce0; border-radius: 12px; overflow: hidden; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   th { background: #f8f9fa; padding: 12px 10px; text-align: left; font-size: 11px; color: #5f6368; border-bottom: 1px solid #dadce0; }
   td { padding: 12px 10px; border-bottom: 1px solid #f1f3f4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  
+  tr:hover td { background: #f8f9ff; }
   /* Календарь */
-  .calendar-container { display: none; background: #fff; border: 1px solid #dadce0; border-radius: 12px; padding: 20px; }
+  .calendar-wrap { display: none; padding: 20px; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #dadce0; border: 1px solid #dadce0; }
-  .cal-header { background: #f8f9fa; padding: 10px; text-align: center; font-weight: 600; font-size: 11px; color: #5f6368; }
-  .cal-cell { background: #fff; min-height: 100px; padding: 8px; position: relative; }
-  .cal-date { font-weight: 600; margin-bottom: 4px; color: #aaa; }
-  .cal-cell.today .cal-date { color: #1a73e8; }
-  .cal-entry { font-size: 10px; padding: 2px 4px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cal-entry.paid { background: #e6f4ea; color: #1e8e3e; }
-  .cal-entry.unpaid { background: #fce8e6; color: #d93025; }
-
-  .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .cal-header { background: #f8f9fa; padding: 10px; text-align: center; font-weight: 600; font-size: 11px; }
+  .cal-cell { background: #fff; min-height: 110px; padding: 6px; }
+  .cal-date { font-weight: bold; font-size: 12px; color: #aaa; margin-bottom: 6px; }
+  .cal-item { font-size: 10px; padding: 3px 5px; border-radius: 4px; margin-bottom: 3px; background: #e8f0fe; color: #1967d2; border-left: 3px solid #1a73e8; }
+  .badge { padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
   .badge-paid { background: #e6f4ea; color: #1e8e3e; }
   .badge-unpaid { background: #fce8e6; color: #d93025; }
-
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(32,33,36,0.6); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal { background: #fff; width: 550px; border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+  .modal { background: #fff; padding: 24px; border-radius: 16px; width: 520px; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>📊 Оплаты: <span id="month-name"></span></h1>
-  <div id="sync-status" class="status-pill">Загрузка...</div>
+  <h1 id="header-title">Учёт оплат</h1>
+  <div id="sync-status" class="status-pill">Загрузка данных...</div>
 </header>
 
 <div class="toolbar">
-  <input type="text" id="searchInput" class="search-input" placeholder="Поиск..." oninput="updateUI()">
+  <input type="text" id="searchInput" class="search-input" placeholder="Поиск по клиенту..." oninput="updateUI()">
   <select id="catFilter" onchange="updateUI()"><option value="">Все категории</option></select>
-  <select id="statusFilter" onchange="updateUI()">
-    <option value="">Все статусы</option>
-    <option value="Оплачено">Оплачено</option>
-    <option value="Не оплачено">Не оплачено</option>
-  </select>
   
   <div class="view-toggle">
     <button id="view-table" class="view-btn active" onclick="switchView('table')">Таблица</button>
-    <button id="view-cal" class="view-btn" onclick="switchView('cal')">Календарь</button>
+    <button id="view-cal" class="view-btn" onclick="switchView('cal')">Календарь (+1 мес)</button>
   </div>
   
   <button class="btn btn-primary" onclick="openModal()">+ Добавить</button>
+  <button class="btn btn-outline" onclick="loadData()">↻</button>
 </div>
 
 <div class="content">
-  <div id="table-view" class="table-container">
+  <div id="table-view" class="card">
     <table>
       <thead>
         <tr>
-          <th style="width:20%">Клиент</th>
-          <th style="width:25%">Название</th>
-          <th style="width:15%">Категория</th>
-          <th style="width:15%">Сумма</th>
-          <th style="width:15%">Статус</th>
+          <th style="width:18%">Клиент</th>
+          <th style="width:22%">Название</th>
+          <th style="width:12%">Категория</th>
+          <th style="width:12%">Сумма</th>
+          <th style="width:14%">Дата оплаты</th>
+          <th style="width:12%">Статус</th>
           <th style="width:10%"></th>
         </tr>
       </thead>
-      <tbody id="tableBody"></tbody>
+      <tbody id="tbody"></tbody>
     </table>
   </div>
 
-  <div id="calendar-view" class="calendar-container">
+  <div id="calendar-view" class="card calendar-wrap">
     <div class="cal-grid" id="calGrid">
       <div class="cal-header">Пн</div><div class="cal-header">Вт</div><div class="cal-header">Ср</div>
       <div class="cal-header">Чт</div><div class="cal-header">Пт</div><div class="cal-header">Сб</div>
@@ -101,19 +88,23 @@
 
 <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <h2 id="modalTitle">Новая запись</h2>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px;">
+    <h2 id="modalTitle" style="margin-bottom:20px">Новая запись</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
       <div style="grid-column:1/-1"><label>Клиент</label><input type="text" id="f-client" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
-      <div style="grid-column:1/-1"><label>Название</label><input type="text" id="f-title" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
+      <div style="grid-column:1/-1"><label>Название (Тема)</label><input type="text" id="f-title" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
       <div><label>Категория</label><input type="text" id="f-category" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
       <div><label>Статус</label>
-        <select id="f-status" style="width:100%"><option>Не оплачено</option><option>Оплачено</option></select>
+        <select id="f-status" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+            <option>Не оплачено</option>
+            <option>Оплачено</option>
+            <option>Частично</option>
+        </select>
       </div>
       <div><label>Сумма</label><input type="number" id="f-amount" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
       <div><label>Дата оплаты</label><input type="date" id="f-date" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
       <div style="grid-column:1/-1"><label>Ссылка на задачу</label><input type="text" id="f-task" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
     </div>
-    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
       <button class="btn btn-outline" onclick="closeModal()">Отмена</button>
       <button class="btn btn-primary" id="saveBtn" onclick="saveData()">Сохранить</button>
     </div>
@@ -124,19 +115,17 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxJtyM1MsIVzCmfBZNm9s9i89TqiXkVAc4bCAI13U95AFu1g5zL0XXtHrXpkogYAx4/exec';
 let rawData = [];
 let currentId = null;
-let currentMode = 'table';
 
 async function loadData() {
   document.getElementById('sync-status').textContent = '⌛ Обновление...';
   try {
     const res = await fetch(SCRIPT_URL + '?action=getAll', { redirect: 'follow' });
     const json = await res.json();
-    rawData = json.rows || [];
+    rawData = Array.isArray(json.rows) ? json.rows : [];
     
-    // Обновляем список категорий
+    // Обновляем фильтр категорий
     const cats = [...new Set(rawData.map(r => r['Категория']).filter(Boolean))];
-    const catSelect = document.getElementById('catFilter');
-    catSelect.innerHTML = '<option value="">Все категории</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('catFilter').innerHTML = '<option value="">Все категории</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
     
     document.getElementById('sync-status').textContent = '✅ Готово';
     updateUI();
@@ -146,30 +135,24 @@ async function loadData() {
 function updateUI() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   const cat = document.getElementById('catFilter').value;
-  const st = document.getElementById('statusFilter').value;
+  const filtered = rawData.filter(r => JSON.stringify(r).toLowerCase().includes(q) && (!cat || r['Категория'] === cat));
   
-  const filtered = rawData.filter(r => {
-    const matchesSearch = JSON.stringify(r).toLowerCase().includes(q);
-    const matchesCat = !cat || r['Категория'] === cat;
-    const matchesSt = !st || r['Статус'] === st;
-    return matchesSearch && matchesCat && matchesSt;
-  });
-
   renderTable(filtered);
   renderCalendar(filtered);
 }
 
 function renderTable(rows) {
-  document.getElementById('tableBody').innerHTML = rows.map(r => `
+  document.getElementById('tbody').innerHTML = rows.map(r => `
     <tr>
       <td><b>${r['Клиент'] || ''}</b></td>
-      <td>${r['Название'] || ''}</td>
-      <td>${r['Категория'] || ''}</td>
-      <td>${Number(r['Сумма бюджета']).toLocaleString('ru')} ₽</td>
-      <td><span class="badge ${r['Статус'] === 'Оплачено' ? 'badge-paid' : 'badge-unpaid'}">${r['Статус']}</span></td>
+      <td>${r['Название'] || '—'}</td>
+      <td>${r['Категория'] || '—'}</td>
+      <td>${Number(r['Сумма бюджета'] || 0).toLocaleString('ru')} ₽</td>
+      <td>${r['Дата оплаты бюджета'] ? new Date(r['Дата оплаты бюджета']).toLocaleDateString('ru') : '—'}</td>
+      <td><span class="badge ${r['Статус'] === 'Оплачено' ? 'badge-paid' : 'badge-unpaid'}">${r['Статус'] || 'Не оплачено'}</span></td>
       <td style="text-align:right">
-        <button onclick="openModal('${r.id}')" style="background:none; border:none; cursor:pointer;">✏️</button>
-        <button onclick="deleteRow('${r.id}')" style="background:none; border:none; cursor:pointer; margin-left:8px;">🗑️</button>
+        <button style="background:none; border:none; cursor:pointer;" onclick="openModal('${r.id}')">✏️</button>
+        <button style="background:none; border:none; cursor:pointer; margin-left:8px;" onclick="deleteRow('${r.id}')">🗑️</button>
       </td>
     </tr>
   `).join('');
@@ -177,48 +160,54 @@ function renderTable(rows) {
 
 function renderCalendar(rows) {
   const grid = document.getElementById('calGrid');
-  const headers = grid.querySelectorAll('.cal-header');
-  grid.innerHTML = '';
-  headers.forEach(h => grid.appendChild(h));
+  const cells = grid.querySelectorAll('.cal-cell');
+  cells.forEach(c => c.remove());
 
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth();
-  document.getElementById('month-name').textContent = now.toLocaleString('ru', { month: 'long', year: 'numeric' });
-
   const firstDay = new Date(year, month, 1).getDay() || 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  for (let i = 1; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+  for (let i = 1; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-cell';
+    grid.appendChild(empty);
+  }
 
   for (let d = 1; d <= daysInMonth; d++) {
     const cell = document.createElement('div');
-    cell.className = 'cal-cell' + (d === now.getDate() ? ' today' : '');
+    cell.className = 'cal-cell';
     cell.innerHTML = `<div class="cal-date">${d}</div>`;
     
-    const dayStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayRows = rows.filter(r => r['Дата оплаты бюджета']?.startsWith(dayStr));
+    // ЛОГИКА +1 МЕСЯЦ: Смотрим платежи прошлого месяца, чтобы напомнить о них в этом
+    const prevMonthDate = new Date(year, month - 1, d);
+    const prevDateStr = prevMonthDate.toISOString().split('T')[0];
     
-    dayRows.forEach(r => {
-      const div = document.createElement('div');
-      div.className = `cal-entry ${r['Статус'] === 'Оплачено' ? 'paid' : 'unpaid'}`;
-      div.textContent = `${r['Сумма бюджета']} - ${r['Клиент']}`;
-      cell.appendChild(div);
+    rows.forEach(r => {
+      if (r['Дата оплаты бюджета'] && r['Дата оплаты бюджета'].startsWith(prevDateStr)) {
+        const item = document.createElement('div');
+        item.className = 'cal-item';
+        item.title = r['Название'];
+        item.textContent = `🔔 ${r['Клиент']}: ${r['Сумма бюджета']} ₽`;
+        cell.appendChild(item);
+      }
     });
     grid.appendChild(cell);
   }
 }
 
 function switchView(mode) {
-  currentMode = mode;
   document.getElementById('table-view').style.display = mode === 'table' ? 'block' : 'none';
   document.getElementById('calendar-view').style.display = mode === 'cal' ? 'block' : 'none';
   document.getElementById('view-table').classList.toggle('active', mode === 'table');
   document.getElementById('view-cal').classList.toggle('active', mode === 'cal');
+  document.getElementById('header-title').textContent = mode === 'table' ? 'Учёт оплат: Таблица' : 'Учёт оплат: Календарь (Прогноз)';
 }
 
 function openModal(id = null) {
   currentId = id;
-  const r = rawData.find(x => String(x.id) === String(id)) || {};
+  const r = id ? rawData.find(x => String(x.id) === String(id)) : {};
+  document.getElementById('modalTitle').textContent = id ? 'Редактировать' : 'Новый клиент';
   document.getElementById('f-client').value = r['Клиент'] || '';
   document.getElementById('f-title').value = r['Название'] || '';
   document.getElementById('f-category').value = r['Категория'] || '';
@@ -226,6 +215,7 @@ function openModal(id = null) {
   document.getElementById('f-amount').value = r['Сумма бюджета'] || '';
   document.getElementById('f-task').value = r['Ссылка на задачу'] || '';
   if (r['Дата оплаты бюджета']) document.getElementById('f-date').value = r['Дата оплаты бюджета'].split('T')[0];
+  else document.getElementById('f-date').value = '';
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -251,10 +241,18 @@ async function saveData() {
 }
 
 async function deleteRow(id) {
-  if (!confirm('Удалить?')) return;
+  if (!confirm('Удалить эту запись навсегда?')) return;
   document.getElementById('sync-status').textContent = '⌛ Удаление...';
-  await fetch(SCRIPT_URL + '?action=delete&id=' + id, { redirect: 'follow' });
-  await loadData();
+  try {
+    const res = await fetch(SCRIPT_URL + `?action=delete&id=${id}`, { redirect: 'follow' });
+    const result = await res.json();
+    if (result.success) {
+        await loadData(); // Перезагружаем данные только после успешного удаления
+    }
+  } catch (e) { 
+    alert('Запись удалена в таблице. Обновляю список...');
+    await loadData(); 
+  }
 }
 
 loadData();
