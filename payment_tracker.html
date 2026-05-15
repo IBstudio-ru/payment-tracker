@@ -119,9 +119,6 @@
             <th style="width:95px" onclick="sortBy('category')">Категория <span id="s-category"></span></th>
             <th style="width:72px">Статья</th>
             <th style="width:72px">Задача</th>
-            <th style="width:90px" onclick="sortBy('launch')">Первый запуск <span id="s-launch"></span></th>
-            <th style="width:90px" onclick="sortBy('payWork')">Опл. работы <span id="s-payWork"></span></th>
-            <th style="width:80px" onclick="sortBy('workAmt')">Сумма работы <span id="s-workAmt"></span></th>
             <th style="width:90px" onclick="sortBy('payBudget')">Опл. бюджета <span id="s-payBudget"></span></th>
             <th style="width:80px" onclick="sortBy('budgetAmt')">Сумма бюджета <span id="s-budgetAmt"></span></th>
             <th style="width:90px">Статус</th>
@@ -152,10 +149,6 @@
       </div>
       <div class="fg full"><label>Ссылка на статью</label><input id="f-article" placeholder="https://..."></div>
       <div class="fg full"><label>Ссылка на задачу в Битрикс24</label><input id="f-task" placeholder="https://ваш-портал.bitrix24.ru/tasks/task/view/..."></div>
-      <div class="fg"><label>Первый запуск</label><input type="date" id="f-launch"></div>
-      <div class="fg"></div>
-      <div class="fg"><label>Дата оплаты работы</label><input type="date" id="f-paywork"></div>
-      <div class="fg"><label>Сумма работы (₽)</label><input type="number" id="f-workamt" placeholder="0" min="0"></div>
       <div class="fg"><label>Дата оплаты бюджета</label><input type="date" id="f-paybudget"></div>
       <div class="fg"><label>Сумма бюджета (₽)</label><input type="number" id="f-budgetamt" placeholder="0" min="0"></div>
     </div>
@@ -269,9 +262,6 @@ function render() {
       <td>${r.category||''}</td>
       <td>${r.articleUrl ? `<a class="link-btn" href="${r.articleUrl}" target="_blank">↗ Статья</a>` : '—'}</td>
       <td>${r.taskUrl ? `<a class="link-btn" href="${r.taskUrl}" target="_blank">↗ Задача</a>` : '—'}</td>
-      <td>${fmt(r.launch)}</td>
-      <td>${fmt(r.payWork)}</td>
-      <td>${fmtMoney(r.workAmt)}</td>
       <td>${fmt(r.payBudget)}</td>
       <td>${fmtMoney(r.budgetAmt)}</td>
       <td><span class="badge ${badgeCls(r.status)}">${r.status||''}</span></td>
@@ -282,7 +272,6 @@ function render() {
     </tr>`).join('');
   }
 
-  const totalWork = data.reduce((s,r) => s + (Number(r.workAmt)||0), 0);
   const totalBudget = data.reduce((s,r) => s + (Number(r.budgetAmt)||0), 0);
   const paid = data.filter(r => r.status==='Оплачено').length;
   const unpaid = data.filter(r => r.status==='Не оплачено').length;
@@ -290,7 +279,6 @@ function render() {
     <div class="metric"><div class="metric-label">Всего клиентов</div><div class="metric-value blue">${data.length}</div></div>
     <div class="metric"><div class="metric-label">Оплачено</div><div class="metric-value green">${paid}</div></div>
     <div class="metric"><div class="metric-label">Не оплачено</div><div class="metric-value amber">${unpaid}</div></div>
-    <div class="metric"><div class="metric-label">Сумма работ</div><div class="metric-value">${totalWork.toLocaleString('ru-RU')} ₽</div></div>
     <div class="metric"><div class="metric-label">Сумма бюджетов</div><div class="metric-value amber">${totalBudget.toLocaleString('ru-RU')} ₽</div></div>
   `;
 }
@@ -328,9 +316,6 @@ async function saveRow() {
     status: document.getElementById('f-status').value,
     articleUrl: document.getElementById('f-article').value.trim(),
     taskUrl: document.getElementById('f-task').value.trim(),
-    launch: document.getElementById('f-launch').value,
-    payWork: document.getElementById('f-paywork').value,
-    workAmt: Number(document.getElementById('f-workamt').value) || 0,
     payBudget: document.getElementById('f-paybudget').value,
     budgetAmt: Number(document.getElementById('f-budgetamt').value) || 0,
   };
