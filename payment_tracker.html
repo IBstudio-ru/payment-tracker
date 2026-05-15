@@ -6,64 +6,58 @@
 <title>Мониторинг оплат</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; background: #f8f9fa; color: #202124; }
-  
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; background: #f8f9fa; color: #202124; line-height: 1.4; }
   header { background: #fff; border-bottom: 1px solid #dadce0; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-  header h1 { font-size: 18px; font-weight: 500; color: #3c4043; }
+  header h1 { font-size: 18px; font-weight: 500; }
   .status-pill { font-size: 11px; padding: 4px 12px; border-radius: 16px; background: #e8f0fe; color: #1967d2; font-weight: 500; }
-
   .toolbar { background: #fff; padding: 12px 20px; border-bottom: 1px solid #dadce0; display: flex; gap: 12px; align-items: center; }
   .search-input { flex: 1; padding: 8px 12px; border: 1px solid #dadce0; border-radius: 8px; outline: none; }
   select { padding: 8px; border: 1px solid #dadce0; border-radius: 8px; background: #fff; cursor: pointer; }
-
-  .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+  .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-primary { background: #1a73e8; color: #fff; }
   .btn-outline { background: #fff; border: 1px solid #dadce0; color: #3c4043; }
-
+  .btn-danger { color: #d93025; background: none; }
   .metrics-bar { display: flex; gap: 16px; padding: 16px 20px; }
-  .metric-card { background: #fff; border: 1px solid #dadce0; border-radius: 12px; padding: 16px; min-width: 200px; }
-  .metric-label { font-size: 11px; color: #70757a; text-transform: uppercase; margin-bottom: 4px; }
-  .metric-value { font-size: 22px; font-weight: 700; color: #1a73e8; }
-
+  .metric-card { background: #fff; border: 1px solid #dadce0; border-radius: 12px; padding: 16px; min-width: 200px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .metric-label { font-size: 11px; color: #70757a; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
+  .metric-value { font-size: 24px; font-weight: 700; color: #1a73e8; }
   .content { padding: 0 20px 40px; }
   .table-container { background: #fff; border: 1px solid #dadce0; border-radius: 12px; overflow: hidden; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   th { background: #f8f9fa; padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 600; color: #5f6368; border-bottom: 1px solid #dadce0; }
   td { padding: 12px 10px; border-bottom: 1px solid #f1f3f4; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   tr:hover td { background: #f8f9ff; }
-
-  .link-icon { color: #1a73e8; text-decoration: none; font-weight: bold; font-size: 14px; }
   .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
   .badge-paid { background: #e6f4ea; color: #1e8e3e; }
   .badge-unpaid { background: #fce8e6; color: #d93025; }
   .badge-part { background: #fef7e0; color: #ea8600; }
-
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(32,33,36,0.6); z-index: 100; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: #fff; width: 550px; border-radius: 16px; padding: 24px; max-height: 90vh; overflow-y: auto; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 15px; }
   .full-width { grid-column: 1 / -1; }
-  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-group { display: flex; flex-direction: column; gap: 4px; }
   .input-group label { font-size: 11px; font-weight: 600; color: #5f6368; }
-  .input-group input, .input-group select { padding: 10px; border: 1px solid #dadce0; border-radius: 8px; outline: none; }
+  .input-group input, .input-group select { padding: 9px; border: 1px solid #dadce0; border-radius: 8px; outline: none; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>📊 Система учёта оплат</h1>
-  <div id="sync-status" class="status-pill">Данные обновлены</div>
+  <h1>📊 Мониторинг оплат</h1>
+  <div id="sync-status" class="status-pill">Загрузка...</div>
 </header>
 
 <div class="toolbar">
-  <input type="text" id="searchInput" class="search-input" placeholder="Поиск по клиенту или названию..." oninput="updateUI()">
+  <input type="text" id="searchInput" class="search-input" placeholder="Поиск по клиенту или теме..." oninput="updateUI()">
   <select id="statusFilter" onchange="updateUI()">
     <option value="">Все статусы</option>
     <option value="Оплачено">Оплачено</option>
     <option value="Не оплачено">Не оплачено</option>
     <option value="Частично">Частично</option>
   </select>
-  <button class="btn btn-primary" onclick="openModal()">+ Добавить</button>
+  <button class="btn btn-primary" id="btn-open-modal" onclick="openModal()">+ Добавить</button>
   <button class="btn btn-outline" onclick="loadData()">Обновить</button>
 </div>
 
@@ -80,18 +74,15 @@
       <thead>
         <tr>
           <th style="width: 18%">Клиент</th>
-          <th style="width: 20%">Название (Тема)</th>
+          <th style="width: 22%">Название</th>
           <th style="width: 12%">Категория</th>
-          <th style="width: 8%; text-align:center">Статья</th>
-          <th style="width: 8%; text-align:center">Задача</th>
-          <th style="width: 12%">Сумма</th>
+          <th style="width: 8%; text-align:center">Ссылки</th>
+          <th style="width: 14%">Сумма</th>
           <th style="width: 12%">Статус</th>
-          <th style="width: 10%"></th>
+          <th style="width: 14%">Действия</th>
         </tr>
       </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="8" style="text-align:center; padding:40px; color:#999">Загрузка данных...</td></tr>
-      </tbody>
+      <tbody id="tableBody"></tbody>
     </table>
   </div>
 </div>
@@ -116,9 +107,9 @@
       <div class="input-group full-width"><label>Ссылка на задачу</label><input type="text" id="f-task"></div>
     </div>
     <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
-      <button class="btn btn-outline" onclick="closeModal()">Отмена</button>
-      <button class="btn btn-outline" onclick="saveData(true)">Еще строку</button>
-      <button class="btn btn-primary" onclick="saveData(false)">Сохранить</button>
+      <button class="btn btn-outline" id="btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-outline" id="btn-save-more" onclick="saveData(true)">Еще строку</button>
+      <button class="btn btn-primary" id="btn-save" onclick="saveData(false)">Сохранить</button>
     </div>
   </div>
 </div>
@@ -127,79 +118,84 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxJtyM1MsIVzCmfBZNm9s9i89TqiXkVAc4bCAI13U95AFu1g5zL0XXtHrXpkogYAx4/exec';
 let rawData = [];
 let currentEditId = null;
+let isSaving = false;
 
 async function loadData() {
-  document.getElementById('sync-status').textContent = 'Синхронизация...';
+  document.getElementById('sync-status').textContent = 'Обновление...';
   try {
-    const response = await fetch(SCRIPT_URL + '?action=getAll', { redirect: 'follow' });
-    const json = await response.json();
+    const res = await fetch(SCRIPT_URL + '?action=getAll', { redirect: 'follow' });
+    const json = await res.json();
     rawData = json.rows || [];
-    document.getElementById('sync-status').textContent = 'Данные обновлены';
+    document.getElementById('sync-status').textContent = 'Готово';
     updateUI();
-  } catch (e) {
-    document.getElementById('sync-status').textContent = 'Ошибка связи';
-  }
+  } catch (e) { document.getElementById('sync-status').textContent = 'Ошибка'; }
 }
 
 function updateUI() {
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  const filterStatus = document.getElementById('statusFilter').value;
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value;
   
-  const filtered = rawData.filter(row => {
-    const matchesSearch = (row['Клиент'] || '').toLowerCase().includes(searchTerm) || (row['Название'] || '').toLowerCase().includes(searchTerm);
-    const matchesStatus = !filterStatus || row['Статус'] === filterStatus;
-    return matchesSearch && matchesStatus;
+  const filtered = rawData.filter(r => {
+    // Ищем название в разных вариантах написания колонки
+    const title = (r['Название'] || r['Название (Тема)'] || '').toString().toLowerCase();
+    const client = (r['Клиент'] || '').toString().toLowerCase();
+    return (title.includes(q) || client.includes(q)) && (!st || r['Статус'] === st);
   });
 
-  const total = filtered.reduce((sum, row) => sum + (Number(row['Сумма бюджета']) || 0), 0);
+  const total = filtered.reduce((s, r) => s + (Number(r['Сумма бюджета']) || 0), 0);
   document.getElementById('total-amount').textContent = total.toLocaleString('ru-RU') + ' ₽';
 
   const tbody = document.getElementById('tableBody');
-  if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:#999">Нет данных</td></tr>';
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#999">Записей нет</td></tr>';
     return;
   }
 
-  tbody.innerHTML = filtered.map(row => `
+  tbody.innerHTML = filtered.map(r => `
     <tr>
-      <td style="font-weight:500">${row['Клиент'] || '—'}</td>
-      <td>${row['Название'] || '—'}</td>
-      <td style="color:#70757a">${row['Категория'] || '—'}</td>
-      <td style="text-align:center">${row['Ссылка на статью'] ? `<a href="${row['Ссылка на статью']}" target="_blank" class="link-icon">↗</a>` : '—'}</td>
-      <td style="text-align:center">${row['Ссылка на задачу'] ? `<a href="${row['Ссылка на задачу']}" target="_blank" class="link-icon">↗</a>` : '—'}</td>
-      <td style="font-weight:600">${(Number(row['Сумма бюджета']) || 0).toLocaleString('ru-RU')} ₽</td>
-      <td><span class="badge ${getStatusClass(row['Статус'])}">${row['Статус'] || 'Не оплачено'}</span></td>
+      <td style="font-weight:500">${r['Клиент'] || '—'}</td>
+      <td>${r['Название'] || r['Название (Тема)'] || '—'}</td>
+      <td style="color:#70757a">${r['Категория'] || '—'}</td>
+      <td style="text-align:center">
+        ${r['Ссылка на статью'] ? `<a href="${r['Ссылка на статью']}" target="_blank" style="text-decoration:none">📄</a>` : ''}
+        ${r['Ссылка на задачу'] ? `<a href="${r['Ссылка на задачу']}" target="_blank" style="text-decoration:none">✅</a>` : ''}
+      </td>
+      <td style="font-weight:600">${(Number(r['Сумма бюджета']) || 0).toLocaleString('ru-RU')} ₽</td>
+      <td><span class="badge ${r['Статус'] === 'Оплачено' ? 'badge-paid' : r['Статус'] === 'Частично' ? 'badge-part' : 'badge-unpaid'}">${r['Статус'] || 'Не оплачено'}</span></td>
       <td style="text-align:right">
-        <button class="btn btn-outline" style="padding:4px 8px" onclick="openModal('${row.id}')">✏️</button>
+        <button class="btn btn-outline" style="padding:4px 8px" onclick="openModal('${r.id}')">✏️</button>
+        <button class="btn btn-danger" style="padding:4px 8px" onclick="deleteRow('${r.id}')">🗑</button>
       </td>
     </tr>
   `).join('');
 }
 
-function getStatusClass(s) {
-  if (s === 'Оплачено') return 'badge-paid';
-  if (s === 'Частично') return 'badge-part';
-  return 'badge-unpaid';
-}
-
 function openModal(id = null) {
   currentEditId = id;
-  const row = rawData.find(r => r.id == id) || {};
-  document.getElementById('modalTitle').textContent = id ? 'Редактировать запись' : 'Новая запись';
-  document.getElementById('f-client').value = row['Клиент'] || '';
-  document.getElementById('f-title').value = row['Название'] || '';
-  document.getElementById('f-category').value = row['Категория'] || '';
-  document.getElementById('f-status').value = row['Статус'] || 'Не оплачено';
-  document.getElementById('f-amount').value = row['Сумма бюджета'] || '';
-  document.getElementById('f-article').value = row['Ссылка на статью'] || '';
-  document.getElementById('f-task').value = row['Ссылка на задачу'] || '';
-  document.getElementById('f-date').value = row['Дата оплаты бюджета'] ? new Date(row['Дата оплаты бюджета']).toISOString().split('T')[0] : '';
+  const r = rawData.find(x => x.id == id) || {};
+  document.getElementById('modalTitle').textContent = id ? 'Редактировать' : 'Новая запись';
+  document.getElementById('f-client').value = r['Клиент'] || '';
+  document.getElementById('f-title').value = r['Название'] || r['Название (Тема)'] || '';
+  document.getElementById('f-category').value = r['Категория'] || '';
+  document.getElementById('f-status').value = r['Статус'] || 'Не оплачено';
+  document.getElementById('f-amount').value = r['Сумма бюджета'] || '';
+  document.getElementById('f-article').value = r['Ссылка на статью'] || '';
+  document.getElementById('f-task').value = r['Ссылка на задачу'] || '';
+  const dateVal = r['Дата оплаты бюджета'];
+  document.getElementById('f-date').value = dateVal ? new Date(dateVal).toISOString().split('T')[0] : '';
   document.getElementById('modal').classList.add('open');
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() { if(!isSaving) document.getElementById('modal').classList.remove('open'); }
 
 async function saveData(keepOpen) {
+  if (isSaving) return;
+  isSaving = true;
+  const btn = document.getElementById(keepOpen ? 'btn-save-more' : 'btn-save');
+  const originalText = btn.textContent;
+  btn.textContent = '⏱...';
+  document.querySelectorAll('.modal-actions button').forEach(b => b.disabled = true);
+
   const payload = {
     id: currentEditId || '',
     'Клиент': document.getElementById('f-client').value,
@@ -221,11 +217,23 @@ async function saveData(keepOpen) {
       document.getElementById('f-amount').value = '';
       document.getElementById('f-title').focus();
     } else {
-      closeModal();
+      document.getElementById('modal').classList.remove('open');
     }
-  } catch (e) {
-    alert('Ошибка при сохранении');
+  } catch (e) { alert('Ошибка при сохранении'); }
+  finally {
+    isSaving = false;
+    btn.textContent = originalText;
+    document.querySelectorAll('.modal-actions button').forEach(b => b.disabled = false);
   }
+}
+
+async function deleteRow(id) {
+  if (!confirm('Удалить?')) return;
+  document.getElementById('sync-status').textContent = 'Удаление...';
+  try {
+    await fetch(SCRIPT_URL + '?action=delete&id=' + id, { redirect: 'follow' });
+    await loadData();
+  } catch (e) { alert('Ошибка'); }
 }
 
 loadData();
