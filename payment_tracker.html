@@ -6,89 +6,73 @@
 <title>Учёт оплат клиентов</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; background: #f5f5f5; color: #1a1a1a; padding: 0; }
-  header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
-  header h1 { font-size: 16px; font-weight: 600; flex: 1; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; background: #f5f5f5; color: #1a1a1a; }
+  header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 16px; font-weight: 600; }
   .save-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #e8f5e9; color: #2e7d32; }
   .save-badge.saving { background: #fff8e1; color: #f57f17; }
   .save-badge.error { background: #ffebee; color: #c62828; }
-  .toolbar { display: flex; gap: 8px; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; }
-  .toolbar input[type=text] { flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; }
-  select { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; background: #fff; cursor: pointer; }
-  .btn { border: none; border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+  .toolbar { display: flex; gap: 8px; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e0e0e0; align-items: center; }
+  .toolbar input { flex: 1; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; outline: none; }
+  .btn { border: none; border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-weight: 500; }
   .btn-blue { background: #4285f4; color: #fff; }
-  .btn-blue:hover { background: #3367d6; }
   .btn-outline { background: #fff; border: 1px solid #ddd; color: #333; }
-  .btn-outline:hover { background: #f5f5f5; }
   .main { padding: 16px 20px; }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
-  .metric { background: #fff; border-radius: 8px; padding: 12px 16px; border: 1px solid #e8e8e8; }
-  .metric-label { font-size: 11px; color: #888; margin-bottom: 4px; }
-  .metric-value { font-size: 20px; font-weight: 600; }
   .table-card { background: #fff; border-radius: 8px; border: 1px solid #e8e8e8; overflow: hidden; }
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; min-width: 900px; table-layout: fixed; }
-  thead { background: #fafafa; }
-  th { padding: 9px 10px; text-align: left; font-size: 11px; font-weight: 600; color: #555; border-bottom: 1px solid #e8e8e8; cursor: pointer; }
-  td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  tr:hover td { background: #f8f9ff; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  th { padding: 10px; text-align: left; background: #fafafa; border-bottom: 1px solid #eee; color: #666; font-size: 11px; }
+  td { padding: 10px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
   .badge-paid { background: #e8f5e9; color: #2e7d32; }
   .badge-unpaid { background: #ffebee; color: #c62828; }
-  .badge-partial { background: #fff8e1; color: #f57f17; }
-  .icon-btn { background: none; border: none; cursor: pointer; padding: 3px 5px; font-size: 14px; border-radius: 4px; }
+  .icon-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; }
   .icon-btn:hover { background: #eee; }
+  /* Modal */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-start; justify-content: center; padding-top: 40px; }
   .overlay.open { display: flex; }
-  .modal { background: #fff; border-radius: 10px; padding: 24px; width: 520px; max-height: 90vh; overflow-y: auto; }
+  .modal { background: #fff; border-radius: 10px; padding: 24px; width: 500px; }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .fg { display: flex; flex-direction: column; gap: 4px; }
   .fg.full { grid-column: 1/-1; }
-  .fg label { font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; }
-  .fg input, .fg select { border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; }
+  .fg label { font-size: 11px; font-weight: 600; color: #888; }
+  .fg input, .fg select { border: 1px solid #ddd; border-radius: 6px; padding: 8px; outline: none; }
   .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-  .empty { text-align: center; padding: 40px; color: #aaa; }
+  .empty { text-align: center; padding: 40px; color: #999; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>📊 Учёт оплат клиентов</h1>
-  <span class="save-badge" id="save-badge">● Готово</span>
+  <div id="save-badge" class="save-badge">● Готово</div>
 </header>
 
 <div class="toolbar">
-  <input type="text" id="search" placeholder="🔍 Поиск по клиенту или названию..." oninput="render()">
-  <select id="filter-status" onchange="render()">
-    <option value="">Все статусы</option>
-    <option value="Оплачено">Оплачено</option>
-    <option value="Не оплачено">Не оплачено</option>
-    <option value="Частично">Частично</option>
-  </select>
+  <input type="text" id="search" placeholder="Поиск по клиенту или названию..." oninput="render()">
   <button class="btn btn-blue" onclick="openModal()">+ Добавить клиента</button>
   <button class="btn btn-outline" onclick="loadData()">↻ Обновить</button>
 </div>
 
 <div class="main">
-  <div class="metrics" id="metrics"></div>
   <div class="table-card">
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th style="width:125px">Клиент</th>
-            <th style="width:140px">Название (Тема)</th>
-            <th style="width:95px">Категория</th>
-            <th style="width:72px">Статья</th>
-            <th style="width:72px">Задача</th>
+            <th style="width:140px">Клиент</th>
+            <th style="width:160px">Название (Тема)</th>
+            <th style="width:100px">Категория</th>
+            <th style="width:80px">Статья</th>
+            <th style="width:80px">Задача</th>
             <th style="width:110px">Опл. бюджета</th>
             <th style="width:100px">Сумма</th>
             <th style="width:100px">Статус</th>
-            <th style="width:56px"></th>
+            <th style="width:60px"></th>
           </tr>
         </thead>
         <tbody id="table-body">
-          <tr><td colspan="9" class="empty">Загрузка данных...</td></tr>
+          <tr><td colspan="9" class="empty">Загрузка...</td></tr>
         </tbody>
       </table>
     </div>
@@ -97,11 +81,11 @@
 
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <h2 id="modal-title" style="margin-bottom:15px">Новый клиент</h2>
+    <h2 style="margin-bottom:20px" id="modal-title">Новый клиент</h2>
     <div class="form-grid">
-      <div class="fg full"><label>Клиент *</label><input id="f-client" placeholder="Название компании"></div>
-      <div class="fg full"><label>Название (Тема)</label><input id="f-title" placeholder="Например: Моющие пылесосы"></div>
-      <div class="fg"><label>Категория</label><input id="f-category" placeholder="ТОП-5, SEO..."></div>
+      <div class="fg full"><label>Клиент *</label><input id="f-client"></div>
+      <div class="fg full"><label>Название (Тема)</label><input id="f-title"></div>
+      <div class="fg"><label>Категория</label><input id="f-category"></div>
       <div class="fg"><label>Статус</label>
         <select id="f-status">
           <option>Не оплачено</option>
@@ -109,15 +93,15 @@
           <option>Частично</option>
         </select>
       </div>
-      <div class="fg full"><label>Ссылка на статью</label><input id="f-article" placeholder="https://..."></div>
-      <div class="fg full"><label>Ссылка на задачу</label><input id="f-task" placeholder="Битрикс24"></div>
-      <div class="fg"><label>Дата оплаты бюджета</label><input type="date" id="f-paybudget"></div>
-      <div class="fg"><label>Сумма бюджета (₽)</label><input type="number" id="f-budgetamt" placeholder="0"></div>
+      <div class="fg full"><label>Ссылка на статью</label><input id="f-article"></div>
+      <div class="fg full"><label>Ссылка на задачу</label><input id="f-task"></div>
+      <div class="fg"><label>Дата оплаты</label><input type="date" id="f-paybudget"></div>
+      <div class="fg"><label>Сумма бюджета</label><input type="number" id="f-budgetamt"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal()">Отмена</button>
-      <button class="btn btn-outline" id="save-more-btn" onclick="saveRow(true)">Еще строку</button>
-      <button class="btn btn-blue" id="save-btn" onclick="saveRow(false)">Сохранить</button>
+      <button class="btn btn-outline" onclick="saveRow(true)">Еще строку</button>
+      <button class="btn btn-blue" onclick="saveRow(false)">Сохранить</button>
     </div>
   </div>
 </div>
@@ -146,42 +130,41 @@ async function loadData() {
     setBadge('ok', '● Готово');
     render();
   } catch(e) { 
-    setBadge('error', '⚠ Ошибка'); 
-    document.getElementById('table-body').innerHTML = '<tr><td colspan="9" class="empty">Не удалось загрузить данные</td></tr>';
+    setBadge('error', '⚠ Ошибка');
+    document.getElementById('table-body').innerHTML = '<tr><td colspan="9" class="empty">Ошибка подключения</td></tr>';
   }
 }
 
 function render() {
   const q = document.getElementById('search').value.toLowerCase();
-  const st = document.getElementById('filter-status').value;
-  const filtered = data.filter(r => (!q || JSON.stringify(r).toLowerCase().includes(q)) && (!st || r.status === st));
-  
+  const filtered = data.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
   const tbody = document.getElementById('table-body');
+  
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty">Записей пока нет</td></tr>';
-  } else {
-    tbody.innerHTML = filtered.map(r => `<tr>
-      <td>${r.client}</td>
-      <td>${r.title}</td>
-      <td>${r.category}</td>
-      <td>${r.articleUrl ? `<a href="${r.articleUrl}" target="_blank">↗</a>` : '—'}</td>
-      <td>${r.taskUrl ? `<a href="${r.taskUrl}" target="_blank">↗</a>` : '—'}</td>
-      <td>${r.payBudget ? new Date(r.payBudget).toLocaleDateString('ru') : '—'}</td>
-      <td>${Number(r.budgetAmt).toLocaleString('ru')} ₽</td>
-      <td><span class="badge ${r.status === 'Оплачено' ? 'badge-paid' : r.status === 'Частично' ? 'badge-partial' : 'badge-unpaid'}">${r.status}</span></td>
-      <td>
-        <button class="icon-btn" onclick="openModal('${r.id}')">✏️</button>
-        <button class="icon-btn" onclick="deleteRow('${r.id}')">🗑</button>
-      </td>
-    </tr>`).join('');
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Записей нет</td></tr>';
+    return;
   }
-  const total = data.reduce((s,r) => s + Number(r.budgetAmt), 0);
-  document.getElementById('metrics').innerHTML = `<div class="metric"><div class="metric-label">Всего бюджет</div><div class="metric-value">${total.toLocaleString('ru')} ₽</div></div>`;
+
+  tbody.innerHTML = filtered.map(r => `<tr>
+    <td>${r.client}</td>
+    <td>${r.title}</td>
+    <td>${r.category}</td>
+    <td>${r.articleUrl ? `<a href="${r.articleUrl}" target="_blank">↗</a>` : '—'}</td>
+    <td>${r.taskUrl ? `<a href="${r.taskUrl}" target="_blank">↗</a>` : '—'}</td>
+    <td>${r.payBudget ? new Date(r.payBudget).toLocaleDateString('ru') : '—'}</td>
+    <td>${Number(r.budgetAmt).toLocaleString('ru')} ₽</td>
+    <td><span class="badge ${r.status === 'Оплачено' ? 'badge-paid' : 'badge-unpaid'}">${r.status}</span></td>
+    <td>
+      <button class="icon-btn" onclick="openModal('${r.id}')">✏️</button>
+      <button class="icon-btn" onclick="deleteRow('${r.id}')">🗑</button>
+    </td>
+  </tr>`).join('');
 }
 
 function openModal(id) {
   editId = id || null;
   const r = data.find(x => x.id == id) || {};
+  document.getElementById('modal-title').textContent = id ? 'Редактировать' : 'Новый клиент';
   document.getElementById('f-client').value = r.client || '';
   document.getElementById('f-title').value = r.title || '';
   document.getElementById('f-category').value = r.category || '';
@@ -208,23 +191,22 @@ async function saveRow(keepOpen) {
     'Сумма бюджета': document.getElementById('f-budgetamt').value
   };
   setBadge('saving', '⟳ Сохранение...');
-  try {
-    await fetch(SCRIPT_URL + '?action=save&row=' + encodeURIComponent(JSON.stringify(row)), { method: 'GET', redirect: 'follow' });
-    await loadData();
-    if (keepOpen) {
-      editId = null;
-      document.getElementById('f-title').value = '';
-      document.getElementById('f-budgetamt').value = '';
-      document.getElementById('f-title').focus();
-    } else closeModal();
-  } catch(e) { alert('Ошибка сохранения'); }
+  await fetch(SCRIPT_URL + '?action=save&row=' + encodeURIComponent(JSON.stringify(row)), { redirect: 'follow' });
+  await loadData();
+  if (keepOpen) {
+    editId = null;
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-budgetamt').value = '';
+    document.getElementById('f-title').focus();
+  } else closeModal();
 }
 
 async function deleteRow(id) {
-    if(!confirm('Удалить запись?')) return;
+  if (confirm('Удалить?')) {
     setBadge('saving', '⟳ Удаление...');
-    await fetch(SCRIPT_URL + '?action=delete&id=' + id, { method: 'GET', redirect: 'follow' });
+    await fetch(SCRIPT_URL + '?action=delete&id=' + id, { redirect: 'follow' });
     loadData();
+  }
 }
 
 function setBadge(cls, txt) {
