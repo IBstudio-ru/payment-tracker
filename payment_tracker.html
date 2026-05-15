@@ -1,91 +1,106 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Учёт оплат клиентов</title>
-<style>
-  :root { --script-url: ''; }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; background: #f5f5f5; color: #1a1a1a; }
-  header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
-  header h1 { font-size: 16px; font-weight: 600; flex: 1; }
-  .save-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #e8f5e9; color: #2e7d32; }
-  .save-badge.saving { background: #fff8e1; color: #f57f17; }
-  .save-badge.error { background: #ffebee; color: #c62828; }
-  .toolbar { display: flex; gap: 8px; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; }
-  .toolbar input[type=text] { flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; }
-  select { border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 13px; background: #fff; cursor: pointer; }
-  .btn { border: none; border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-weight: 500; transition: 0.2s; }
-  .btn-blue { background: #4285f4; color: #fff; }
-  .btn-blue:hover { background: #3367d6; }
-  .btn-outline { background: #fff; border: 1px solid #ddd; color: #333; }
-  .btn-outline:hover { background: #f5f5f5; }
-  .main { padding: 16px 20px; }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
-  .metric { background: #fff; border-radius: 8px; padding: 12px 16px; border: 1px solid #e8e8e8; }
-  .metric-label { font-size: 11px; color: #888; margin-bottom: 4px; }
-  .metric-value { font-size: 20px; font-weight: 600; }
-  .table-card { background: #fff; border-radius: 8px; border: 1px solid #e8e8e8; overflow: hidden; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; min-width: 900px; table-layout: fixed; }
-  thead { background: #fafafa; }
-  th { padding: 9px 10px; text-align: left; font-size: 11px; font-weight: 600; color: #555; border-bottom: 1px solid #e8e8e8; cursor: pointer; user-select: none; }
-  td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  tr:hover td { background: #f8f9ff; }
-  .link-btn { color: #4285f4; text-decoration: none; font-size: 11px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-  .badge-paid { background: #e8f5e9; color: #2e7d32; }
-  .badge-unpaid { background: #ffebee; color: #c62828; }
-  .badge-partial { background: #fff8e1; color: #f57f17; }
-  .icon-btn { background: none; border: none; cursor: pointer; padding: 3px 5px; font-size: 14px; }
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-start; justify-content: center; padding-top: 40px; }
-  .overlay.open { display: flex; }
-  .modal { background: #fff; border-radius: 10px; padding: 24px; width: 520px; max-height: 90vh; overflow-y: auto; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .fg { display: flex; flex-direction: column; gap: 4px; }
-  .fg.full { grid-column: 1/-1; }
-  .fg label { font-size: 11px; font-weight: 600; color: #666; }
-  .fg input, .fg select { border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; }
-  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-  .setup-bar { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
-</style>
+    <meta charset="UTF-8">
+    <title>Учёт оплат клиентов</title>
+    <style>
+        body { font-family: sans-serif; font-size: 13px; background: #f4f4f4; padding: 20px; }
+        .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
+        th { background: #fafafa; }
+        .badge { padding: 4px 8px; border-radius: 10px; font-size: 11px; }
+        .badge-ok { background: #e8f5e9; color: #2e7d32; }
+        .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; background: #4285f4; color: white; }
+    </style>
 </head>
 <body>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>📊 Учёт оплат</h2>
+            <div id="status-badge" class="badge">Загрузка...</div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="openModal()">+ Добавить запись</button>
+            <button class="btn" style="background: #eee; color: #333;" onclick="loadData()">↻ Обновить</button>
+        </div>
 
-<header>
-  <h1>📊 Учёт оплат клиентов</h1>
-  <span class="save-badge" id="save-badge">● Загрузка...</span>
-</header>
+        <table id="main-table">
+            <thead>
+                <tr>
+                    <th>Клиент</th>
+                    <th>Название</th>
+                    <th>Бюджет</th>
+                    <th>Статус</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="5" style="text-align:center;">Поиск данных...</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-<div class="toolbar">
-  <input type="text" id="search" placeholder="🔍 Поиск по клиенту, названию или категории..." oninput="render()">
-  <select id="filter-status" onchange="render()">
-    <option value="">Все статусы</option>
-    <option value="Оплачено">Оплачено</option>
-    <option value="Не оплачено">Не оплачено</option>
-    <option value="Частично">Частично</option>
-  </select>
-  <button class="btn btn-blue" onclick="openModal()">+ Добавить клиента</button>
-  <button class="btn btn-outline" onclick="loadData()">↻ Обновить</button>
-  <button class="btn btn-outline" onclick="exportCSV()">↓ Экспорт CSV</button>
-</div>
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxJtyM1MsIVzCmfBZNm9s9i89TqiXkVAc4bCAI13U95AFu1g5zL0XXtHrXpkogYAx4/exec';
+        let data = [];
 
-<div class="main">
-  <div class="setup-bar" id="setup-bar" style="display:none">
-    <span>⚙️ URL скрипта:</span>
-    <input type="text" id="script-url-input" style="flex:1">
-    <button class="btn btn-blue" onclick="saveScriptUrl()">OK</button>
-  </div>
-  <div class="metrics" id="metrics"></div>
-  <div class="table-card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:125px" onclick="sortBy('client')">Клиент</th>
-            <th style="width:140px" onclick="sortBy('title')">Название (Тема)</th>
-            <th style="width:95px" onclick="sortBy('category')">Категория</th>
-            <th style="width:72px">Статья</th>
-            <th style="width:72px">Задача</th>
-            <th style="width:90px" onclick="sortBy('payBudget')">Опл. бюджета</th>
+        async function loadData() {
+            const badge = document.getElementById('status-badge');
+            badge.textContent = 'Синхронизация...';
+            try {
+                const response = await fetch(SCRIPT_URL + '?action=getAll', { redirect: 'follow' });
+                const result = await response.json();
+                data = result.rows || [];
+                render();
+                badge.textContent = 'Готово';
+                badge.className = 'badge badge-ok';
+            } catch (e) {
+                console.error(e);
+                badge.textContent = 'Ошибка связи';
+                document.getElementById('tbody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red">Не удалось подключиться к Google Таблице. Проверьте развертывание скрипта.</td></tr>';
+            }
+        }
+
+        function render() {
+            const tbody = document.getElementById('tbody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Записей пока нет. Нажмите "Добавить", чтобы создать первую.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(r => `
+                <tr>
+                    <td>${r['Клиент'] || '—'}</td>
+                    <td>${r['Название'] || '—'}</td>
+                    <td>${r['Сумма бюджета'] || 0} ₽</td>
+                    <td>${r['Статус'] || '—'}</td>
+                    <td><button onclick="deleteRow('${r.id}')">🗑</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // Запуск при старте
+        loadData();
+
+        function openModal() {
+            const client = prompt("Введите название клиента:");
+            const title = prompt("Введите название темы:");
+            const amount = prompt("Сумма бюджета:");
+            if(client) saveRow({ "Клиент": client, "Название": title, "Сумма бюджета": amount, "Статус": "Не оплачено" });
+        }
+
+        async function saveRow(row) {
+            await fetch(SCRIPT_URL + '?action=save&row=' + encodeURIComponent(JSON.stringify(row)), { redirect: 'follow' });
+            loadData();
+        }
+
+        async function deleteRow(id) {
+            if(confirm('Удалить?')) {
+                await fetch(SCRIPT_URL + '?action=delete&id=' + id, { redirect: 'follow' });
+                loadData();
+            }
+        }
+    </script>
+</body>
+</html>
