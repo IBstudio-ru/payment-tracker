@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Мониторинг оплат v5</title>
+<title>Мониторинг оплат v6</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; background: #f8f9fa; color: #202124; line-height: 1.4; }
   
   header { background: #fff; border-bottom: 1px solid #dadce0; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
   header h1 { font-size: 18px; font-weight: 500; color: #3c4043; }
-  .status-pill { font-size: 11px; padding: 4px 12px; border-radius: 16px; background: #f1f3f4; color: #5f6368; font-weight: 500; transition: 0.3s; }
+  .status-pill { font-size: 11px; padding: 4px 12px; border-radius: 16px; background: #f1f3f4; color: #5f6368; font-weight: 500; }
   .status-pill.syncing { background: #fef7e0; color: #ea8600; }
   .status-pill.ready { background: #e6f4ea; color: #1e8e3e; }
 
@@ -67,12 +67,12 @@
     <option value="Частично">Частично</option>
   </select>
   <button class="btn btn-primary" onclick="openModal()">+ Добавить</button>
-  <button class="btn btn-outline" onclick="loadData()">Обновить</button>
+  <button class="btn btn-outline" onclick="loadData()">↻</button>
 </div>
 
 <div class="metrics-bar">
   <div class="metric-card">
-    <div class="metric-label">Общая сумма бюджета</div>
+    <div class="metric-label">Сумма по списку</div>
     <div class="metric-value" id="total-amount">0 ₽</div>
   </div>
 </div>
@@ -87,7 +87,7 @@
           <th style="width: 12%; text-align:center">Ссылки</th>
           <th style="width: 15%">Сумма</th>
           <th style="width: 15%">Статус</th>
-          <th style="width: 13%">Действия</th>
+          <th style="width: 13%"></th>
         </tr>
       </thead>
       <tbody id="tableBody">
@@ -118,8 +118,8 @@
     </div>
     <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
       <button class="btn btn-outline" id="btn-close" onclick="closeModal()">Отмена</button>
-      <button class="btn btn-outline" id="btn-save-more" onclick="saveData(true)">Еще строку</button>
-      <button class="btn btn-primary" id="btn-save" onclick="saveData(false)">Сохранить</button>
+      <button class="btn btn-outline" id="btn-save-more" onclick="saveRow(true)">Еще строку</button>
+      <button class="btn btn-primary" id="btn-save" onclick="saveRow(false)">Сохранить</button>
     </div>
   </div>
 </div>
@@ -172,8 +172,8 @@ function updateUI() {
       <td style="font-weight:600">${(Number(r['Сумма бюджета']) || 0).toLocaleString('ru-RU')} ₽</td>
       <td><span class="badge ${r['Статус'] === 'Оплачено' ? 'badge-paid' : r['Статус'] === 'Частично' ? 'badge-part' : 'badge-unpaid'}">${r['Статус'] || 'Не оплачено'}</span></td>
       <td style="text-align:right">
-        <button class="btn btn-outline" style="padding:4px 8px" onclick="openModal('${r.id}')">✏️</button>
-        <button class="btn btn-danger" style="padding:4px 8px" onclick="deleteRow('${r.id}')">🗑</button>
+        <button style="background:none; border:none; cursor:pointer;" onclick="openModal('${r.id}')" title="Редактировать">✏️</button>
+        <button style="background:none; border:none; cursor:pointer; margin-left:8px;" onclick="deleteRow('${r.id}')" title="Удалить">🗑️</button>
       </td>
     </tr>
   `).join('');
@@ -181,8 +181,10 @@ function updateUI() {
 
 function openModal(id = null) {
   currentEditId = id;
-  const r = rawData.find(x => x.id == id) || {};
-  document.getElementById('modalTitle').textContent = id ? 'Редактировать' : 'Новая запись';
+  // Находим запись и ПРИНУДИТЕЛЬНО приводим ID к строке для точного поиска
+  const r = id ? rawData.find(x => String(x.id) === String(id)) : {};
+  
+  document.getElementById('modalTitle').textContent = id ? 'Редактировать запись' : 'Новая запись';
   document.getElementById('f-client').value = r['Клиент'] || '';
   document.getElementById('f-title').value = r['Название'] || '';
   document.getElementById('f-category').value = r['Категория'] || '';
@@ -193,18 +195,19 @@ function openModal(id = null) {
   
   if (r['Дата оплаты бюджета']) {
     try {
-      document.getElementById('f-date').value = new Date(r['Дата оплаты бюджета']).toISOString().split('T')[0];
+      const d = new Date(r['Дата оплаты бюджета']);
+      document.getElementById('f-date').value = d.toISOString().split('T')[0];
     } catch(e) { document.getElementById('f-date').value = ''; }
   } else {
     document.getElementById('f-date').value = '';
   }
   
-  document.getElementById('modal').classList.add('open');
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 
-async function saveData(keepOpen) {
+async function saveRow(keepOpen) {
   const btn = document.getElementById(keepOpen ? 'btn-save-more' : 'btn-save');
   const originalText = btn.textContent;
   
@@ -237,6 +240,7 @@ async function saveData(keepOpen) {
     }
   } catch (e) {
     alert('Ошибка при сохранении');
+    updateStatus('error', 'Ошибка записи');
   } finally {
     btn.disabled = false;
     btn.textContent = originalText;
