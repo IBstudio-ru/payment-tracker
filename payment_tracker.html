@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Оплаты v13</title>
+<title>CRM Оплаты v17</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, system-ui, sans-serif; font-size: 13px; background: #f8f9fa; color: #202124; line-height: 1.4; }
   header { background: #fff; border-bottom: 1px solid #dadce0; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 18px; font-weight: 500; }
   .status-pill { font-size: 11px; padding: 4px 12px; border-radius: 16px; background: #e8f0fe; color: #1967d2; font-weight: 500; }
   .toolbar { background: #fff; padding: 12px 20px; border-bottom: 1px solid #dadce0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .search-input { flex: 2; padding: 8px 12px; border: 1px solid #dadce0; border-radius: 8px; outline: none; min-width: 150px; }
@@ -18,7 +19,8 @@
   .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s; }
   .btn-primary { background: #1a73e8; color: #fff; }
   .btn-outline { background: #fff; border: 1px solid #dadce0; color: #3c4043; }
-  .content { padding: 20px; }
+  .metric-card { background: #fff; border: 1px solid #dadce0; border-radius: 12px; padding: 16px; margin: 20px; max-width: 250px; }
+  .content { padding: 0 20px 40px; }
   .card { background: #fff; border: 1px solid #dadce0; border-radius: 12px; overflow: hidden; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   th { background: #f8f9fa; padding: 12px 10px; text-align: left; font-size: 11px; color: #5f6368; border-bottom: 1px solid #dadce0; }
@@ -36,14 +38,17 @@
   .badge-unpaid { background: #fce8e6; color: #d93025; }
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal { background: #fff; padding: 24px; border-radius: 16px; width: 520px; }
+  .modal { background: #fff; padding: 24px; border-radius: 16px; width: 520px; max-height: 90vh; overflow-y: auto; }
+  .form-group { margin-bottom: 12px; }
+  label { font-size: 11px; font-weight: 700; color: #666; display: block; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 8px; outline: none; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1 id="header-title">Учёт оплат</h1>
-  <div id="sync-status" class="status-pill">Загрузка...</div>
+  <h1 id="header-title">Мониторинг оплат</h1>
+  <div id="sync-status" class="status-pill">Загрузка данных...</div>
 </header>
 
 <div class="toolbar">
@@ -52,11 +57,16 @@
   
   <div class="view-toggle">
     <button id="view-table" class="view-btn active" onclick="switchView('table')">Таблица</button>
-    <button id="view-cal" class="view-btn" onclick="switchView('cal')">Календарь (+1 мес)</button>
+    <button id="view-cal" class="view-btn" onclick="switchView('cal')">Прогноз (+1 мес)</button>
   </div>
   
   <button class="btn btn-primary" onclick="openModal()">+ Добавить</button>
   <button class="btn btn-outline" onclick="loadData()">↻</button>
+</div>
+
+<div class="metric-card">
+  <div style="font-size: 11px; color: #70757a; text-transform: uppercase; margin-bottom: 4px;">Общая сумма бюджета</div>
+  <div class="metric-value" id="total-amount">0 ₽</div>
 </div>
 
 <div class="content">
@@ -65,8 +75,8 @@
       <thead>
         <tr>
           <th style="width:18%">Клиент</th>
-          <th style="width:20%">Название</th>
-          <th style="width:12%">Сумма</th>
+          <th style="width:22%">Название</th>
+          <th style="width:12%">Категория</th>
           <th style="width:8%; text-align:center">Ссылки</th>
           <th style="width:14%">Дата оплаты</th>
           <th style="width:12%">Статус</th>
@@ -87,21 +97,21 @@
 </div>
 
 <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
+  <div class="modal" onclick="event.stopPropagation()">
     <h2 id="modalTitle" style="margin-bottom:20px">Запись</h2>
+    <div class="form-group"><label>Клиент *</label><input type="text" id="f-client"></div>
+    <div class="form-group"><label>Название (Тема)</label><input type="text" id="f-title"></div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-      <div style="grid-column:1/-1"><label>Клиент</label><input type="text" id="f-client" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
-      <div style="grid-column:1/-1"><label>Название</label><input type="text" id="f-title" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
-      <div><label>Категория</label><input type="text" id="f-category" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
-      <div><label>Статус</label>
-        <select id="f-status" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"><option>Не оплачено</option><option>Оплачено</option><option>Частично</option></select>
+      <div class="form-group"><label>Категория</label><input type="text" id="f-category"></div>
+      <div class="form-group"><label>Статус</label>
+        <select id="f-status"><option>Не оплачено</option><option>Оплачено</option><option>Частично</option></select>
       </div>
-      <div><label>Сумма</label><input type="number" id="f-amount" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
-      <div><label>Дата оплаты</label><input type="date" id="f-date" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
-      <div style="grid-column:1/-1"><label>Ссылка на задачу</label><input type="text" id="f-task" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
-      <div style="grid-column:1/-1"><label>Ссылка на статью</label><input type="text" id="f-article" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;"></div>
+      <div class="form-group"><label>Сумма</label><input type="number" id="f-amount"></div>
+      <div class="form-group"><label>Дата оплаты</label><input type="date" id="f-date"></div>
     </div>
-    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
+    <div class="form-group"><label>Ссылка на задачу</label><input type="text" id="f-task"></div>
+    <div class="form-group"><label>Ссылка на статью</label><input type="text" id="f-article"></div>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
       <button class="btn btn-outline" onclick="closeModal()">Отмена</button>
       <button class="btn btn-primary" id="saveBtn" onclick="saveData()">Сохранить</button>
     </div>
@@ -133,6 +143,9 @@ function updateUI() {
   const cat = document.getElementById('catFilter').value;
   const filtered = rawData.filter(r => JSON.stringify(r).toLowerCase().includes(q) && (!cat || r['Категория'] === cat));
   
+  const total = filtered.reduce((s, r) => s + (Number(r['Сумма бюджета']) || 0), 0);
+  document.getElementById('total-amount').textContent = total.toLocaleString('ru-RU') + ' ₽';
+
   renderTable(filtered);
   renderCalendar(filtered);
 }
@@ -143,13 +156,12 @@ function renderTable(rows) {
       <td><b>${r['Клиент'] || ''}</b></td>
       <td>${r['Название'] || '—'}</td>
       <td>${r['Категория'] || '—'}</td>
-      <td>${Number(r['Сумма бюджета'] || 0).toLocaleString('ru')} ₽</td>
       <td style="text-align:center">
         ${r['Ссылка на статью'] ? `<a href="${r['Ссылка на статью']}" target="_blank" style="text-decoration:none">📄</a>` : ''}
         ${r['Ссылка на задачу'] ? `<a href="${r['Ссылка на задачу']}" target="_blank" style="text-decoration:none">✅</a>` : ''}
       </td>
       <td>${r['Дата оплаты бюджета'] ? new Date(r['Дата оплаты бюджета']).toLocaleDateString('ru') : '—'}</td>
-      <td><span class="badge ${r['Статус'] === 'Оплачено' ? 'badge-paid' : 'badge-unpaid'}">${r['Статус'] || ''}</span></td>
+      <td><span class="badge ${r['Статус'] === 'Оплачено' ? 'badge-paid' : 'badge-unpaid'}">${r['Статус'] || 'Не оплачено'}</span></td>
       <td style="text-align:right">
         <button style="background:none; border:none; cursor:pointer;" onclick="openModal('${r.id}')">✏️</button>
         <button style="background:none; border:none; cursor:pointer; margin-left:8px;" onclick="deleteRow('${r.id}')">🗑️</button>
@@ -161,33 +173,18 @@ function renderTable(rows) {
 function renderCalendar(rows) {
   const grid = document.getElementById('calGrid');
   grid.querySelectorAll('.cal-cell').forEach(c => c.remove());
-
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth();
   const firstDay = new Date(year, month, 1).getDay() || 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  for (let i = 1; i < firstDay; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'cal-cell';
-    grid.appendChild(empty);
-  }
+  for (let i = 1; i < firstDay; i++) grid.appendChild(Object.assign(document.createElement('div'), {className: 'cal-cell'}));
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const cell = document.createElement('div');
-    cell.className = 'cal-cell';
-    cell.innerHTML = `<div class="cal-date">${d}</div>`;
-    
-    // ЛОГИКА ПРОГНОЗА: Берем платежи ровно месяц назад
-    const targetDate = new Date(year, month - 1, d);
-    const dateStr = targetDate.toISOString().split('T')[0];
-    
+    const cell = Object.assign(document.createElement('div'), {className: 'cal-cell', innerHTML: `<div class="cal-date">${d}</div>`});
+    const prevDateStr = new Date(year, month - 1, d).toISOString().split('T')[0];
     rows.forEach(r => {
-      if (r['Дата оплаты бюджета'] && r['Дата оплаты бюджета'].startsWith(dateStr)) {
-        const item = document.createElement('div');
-        item.className = 'cal-item';
-        item.textContent = `🔔 ${r['Клиент']}: ${r['Сумма бюджета']} ₽`;
-        cell.appendChild(item);
+      if (r['Дата оплаты бюджета'] && r['Дата оплаты бюджета'].startsWith(prevDateStr)) {
+        cell.appendChild(Object.assign(document.createElement('div'), {className: 'cal-item', textContent: `🔔 ${r['Клиент']}: ${r['Сумма бюджета']} ₽`}));
       }
     });
     grid.appendChild(cell);
@@ -199,22 +196,14 @@ function switchView(mode) {
   document.getElementById('calendar-view').style.display = mode === 'cal' ? 'block' : 'none';
   document.getElementById('view-table').classList.toggle('active', mode === 'table');
   document.getElementById('view-cal').classList.toggle('active', mode === 'cal');
-  document.getElementById('header-title').textContent = mode === 'table' ? 'Учёт оплат' : 'Учёт оплат: Прогноз (через мес)';
 }
 
 function openModal(id = null) {
   currentId = id;
   const r = id ? rawData.find(x => String(x.id).trim() === String(id).trim()) : {};
-  document.getElementById('modalTitle').textContent = id ? 'Редактировать' : 'Новый клиент';
-  document.getElementById('f-client').value = r['Клиент'] || '';
-  document.getElementById('f-title').value = r['Название'] || '';
-  document.getElementById('f-category').value = r['Категория'] || '';
-  document.getElementById('f-status').value = r['Статус'] || 'Не оплачено';
-  document.getElementById('f-amount').value = r['Сумма бюджета'] || '';
-  document.getElementById('f-task').value = r['Ссылка на задачу'] || '';
-  document.getElementById('f-article').value = r['Ссылка на статью'] || '';
-  if (r['Дата оплаты бюджета']) document.getElementById('f-date').value = r['Дата оплаты бюджета'].split('T')[0];
-  else document.getElementById('f-date').value = '';
+  document.getElementById('modalTitle').textContent = id ? 'Редактировать' : 'Новая запись';
+  ['client','title','category','status','amount','task','article'].forEach(f => document.getElementById('f-'+f).value = r[f === 'amount' ? 'Сумма бюджета' : f === 'client' ? 'Клиент' : f === 'title' ? 'Название' : f === 'category' ? 'Категория' : f === 'status' ? 'Статус' : f === 'task' ? 'Ссылка на задачу' : 'Ссылка на статью'] || (f === 'status' ? 'Не оплачено' : ''));
+  document.getElementById('f-date').value = r['Дата оплаты бюджета'] ? r['Дата оплаты бюджета'].split('T')[0] : '';
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -222,31 +211,22 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 
 async function saveData() {
   const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.textContent = '...';
-  const row = {
-    id: currentId || '',
-    'Клиент': document.getElementById('f-client').value,
-    'Название': document.getElementById('f-title').value,
-    'Категория': document.getElementById('f-category').value,
-    'Статус': document.getElementById('f-status').value,
-    'Сумма бюджета': document.getElementById('f-amount').value,
-    'Дата оплаты бюджета': document.getElementById('f-date').value,
-    'Ссылка на задачу': document.getElementById('f-task').value,
-    'Ссылка на статью': document.getElementById('f-article').value
-  };
-  await fetch(SCRIPT_URL + '?action=save&row=' + encodeURIComponent(JSON.stringify(row)), { redirect: 'follow' });
-  await loadData();
-  btn.disabled = false; btn.textContent = 'Сохранить';
-  closeModal();
+  btn.disabled = true; btn.textContent = '⏱...';
+  const row = { id: currentId || '', 'Клиент': document.getElementById('f-client').value, 'Название': document.getElementById('f-title').value, 'Категория': document.getElementById('f-category').value, 'Статус': document.getElementById('f-status').value, 'Сумма бюджета': document.getElementById('f-amount').value, 'Дата оплаты бюджета': document.getElementById('f-date').value, 'Ссылка на задачу': document.getElementById('f-task').value, 'Ссылка на статью': document.getElementById('f-article').value };
+  try {
+    await fetch(SCRIPT_URL + '?action=save&row=' + encodeURIComponent(JSON.stringify(row)), { redirect: 'follow' });
+    await loadData();
+    closeModal();
+  } catch (e) { alert('Ошибка'); }
+  finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
 }
 
 async function deleteRow(id) {
-  if (!confirm('Удалить эту запись навсегда?')) return;
+  if (!confirm('Удалить?')) return;
   document.getElementById('sync-status').textContent = '⌛ Удаление...';
   try {
     const res = await fetch(SCRIPT_URL + `?action=delete&id=${id}`, { redirect: 'follow' });
-    const result = await res.json();
-    if (result.success) await loadData();
+    await loadData();
   } catch (e) { await loadData(); }
 }
 
