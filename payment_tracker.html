@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM Мониторинг оплат v19.1 (Secure)</title>
+<title>CRM Мониторинг оплат v19.2 (Secure)</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, system-ui, sans-serif; font-size: 13px; background: #f8f9fa; color: #202124; line-height: 1.4; }
@@ -136,7 +136,7 @@
   </div>
 </div>
 
-<div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div id="modalOverlay" class="modal-overlay">
   <div class="modal" onclick="event.stopPropagation()">
     <h2 id="modalTitle" style="margin-bottom:20px">Запись</h2>
     <div class="form-grid">
@@ -237,7 +237,9 @@ function updateUI() {
 }
 
 function renderTable(rows) {
-  document.getElementById('tbody').innerHTML = rows.map(r => `
+  document.getElementById('tbody').innerHTML = rows.map(r => {
+    const idVal = r.id || r.ID || '';
+    return `
     <tr>
       <td><b>${r['Клиент'] || ''}</b></td>
       <td>${r['Название'] || '—'}</td>
@@ -250,11 +252,11 @@ function renderTable(rows) {
       <td>${r['Дата оплаты бюджета'] ? new Date(r['Дата оплаты бюджета']).toLocaleDateString('ru') : '—'}</td>
       <td><span class="badge ${r['Статус'] === 'Оплачено' ? 'badge-paid' : r['Статус'] === 'Частично' ? 'badge-part' : 'badge-unpaid'}">${r['Статус'] || 'Не оплачено'}</span></td>
       <td style="text-align:right">
-        <button style="background:none; border:none; cursor:pointer;" onclick="openModal('${r.id}')">✏️</button>
-        <button style="background:none; border:none; cursor:pointer; margin-left:8px;" onclick="deleteRow('${r.id}')">🗑️</button>
+        <button style="background:none; border:none; cursor:pointer;" onclick="openModal('${idVal}')">✏️</button>
+        <button style="background:none; border:none; cursor:pointer; margin-left:8px;" onclick="deleteRow('${idVal}')">🗑️</button>
       </td>
     </tr>
-  `).join('');
+  `}).join('');
 }
 
 function renderCalendar(rows) {
@@ -286,18 +288,34 @@ function switchView(mode) {
 }
 
 function openModal(id = null) {
-  currentId = id;
-  const r = id ? rawData.find(x => String(x.id).trim() === String(id).trim()) : {};
-  document.getElementById('modalTitle').textContent = id ? 'Редактировать' : 'Новая запись';
+  id = id ? String(id).trim() : null;
+  // Жесткая проверка: если id пустой или равен строке "undefined"/"null" — считаем запись новой
+  const isExisting = id && id !== 'undefined' && id !== 'null' && id !== '';
+  currentId = isExisting ? id : null;
   
-  document.getElementById('f-client').value = r['Клиент'] || '';
-  document.getElementById('f-title').value = r['Название'] || '';
-  document.getElementById('f-category').value = r['Категория'] || '';
-  document.getElementById('f-status').value = r['Статус'] || 'Не оплачено';
-  document.getElementById('f-amount').value = r['Сумма бюджета'] || '';
-  document.getElementById('f-task').value = r['Ссылка на задачу'] || '';
-  document.getElementById('f-article').value = r['Ссылка на статью'] || '';
-  document.getElementById('f-date').value = r['Дата оплаты бюджета'] ? r['Дата оплаты бюджета'].split('T')[0] : '';
+  const r = isExisting ? rawData.find(x => String(x.id || x.ID || '').trim() === id) : {};
+  const rowData = r || {};
+  
+  document.getElementById('modalTitle').textContent = isExisting ? 'Редактировать' : 'Новая запись';
+  
+  document.getElementById('f-client').value = rowData['Клиент'] || rowData['Client'] || '';
+  document.getElementById('f-title').value = rowData['Название'] || rowData['Name'] || '';
+  document.getElementById('f-category').value = rowData['Категория'] || rowData['Category'] || '';
+  document.getElementById('f-status').value = rowData['Статус'] || 'Не оплачено';
+  document.getElementById('f-amount').value = rowData['Сумма бюджета'] || '';
+  document.getElementById('f-task').value = rowData['Ссылка на задачу'] || '';
+  document.getElementById('f-article').value = rowData['Ссылка на статью'] || '';
+  
+  if (rowData['Дата оплаты бюджета']) {
+    try {
+      const d = new Date(rowData['Дата оплаты бюджета']);
+      document.getElementById('f-date').value = d.toISOString().split('T')[0];
+    } catch(e) {
+      document.getElementById('f-date').value = '';
+    }
+  } else {
+    document.getElementById('f-date').value = '';
+  }
   
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -329,6 +347,7 @@ async function saveData() {
 }
 
 async function deleteRow(id) {
+  if (!id || id === 'undefined' || id === 'null') return;
   if (!confirm('Удалить эту запись навсегда?')) return;
   document.getElementById('sync-status').textContent = '⌛ Удаление...';
   try {
